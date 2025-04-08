@@ -77,6 +77,19 @@
   }
 }
 
+/* Custom agent toggle switches */
+.ui-switch[data-state=checked].creative-switch {
+  @apply bg-blue-500 border-blue-600;
+}
+
+.ui-switch[data-state=checked].precise-switch {
+  @apply bg-green-500 border-green-600;
+}
+
+.ui-switch[data-state=checked].helpful-switch {
+  @apply bg-purple-500 border-purple-600;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }

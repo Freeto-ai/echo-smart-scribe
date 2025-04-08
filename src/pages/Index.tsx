@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ChatProvider } from '@/context/ChatContext';
 import Sidebar from '@/components/Sidebar';
 import ChatArea from '@/components/ChatArea';
+import AgentSidebar from '@/components/AgentSidebar';
 
 const Index: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -31,6 +32,9 @@ const Index: React.FC = () => {
         <main className={`flex-1 flex flex-col relative ${!isMobile ? 'ml-0 md:ml-64' : ''}`}>
           <ChatArea />
         </main>
+
+        {/* Only show AgentSidebar on non-mobile devices */}
+        {!isMobile && <AgentSidebar />}
       </div>
     </ChatProvider>
   );
