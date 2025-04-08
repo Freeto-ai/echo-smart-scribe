@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 export interface Message {
@@ -6,6 +5,9 @@ export interface Message {
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  // Add agentId to track which agent sent the message
+  agentId?: string;
+  agentName?: string;
 }
 
 export interface Conversation {
@@ -50,8 +52,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setCurrentConversationId(id);
   };
 
-  // Helper function to generate AI response
-  const generateAIResponse = async (message: string): Promise<string> => {
+  // Helper function to generate AI response, updated to include agent information
+  const generateAIResponse = async (message: string): Promise<{content: string, agentId: string, agentName: string}[]> => {
     // In a real app, this would call an API
     setIsLoading(true);
     
@@ -60,21 +62,55 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     
     setIsLoading(false);
     
-    // Mock responses based on user input
+    // Mock responses with agent information
+    const responses = [];
+    
     if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
-      return "Hello! How can I assist you today?";
+      responses.push({
+        content: "Hello! How can I assist you today?",
+        agentId: "1",
+        agentName: "Agent 1"
+      });
+      responses.push({
+        content: "Hi there! I'm here if you need more creative ideas.",
+        agentId: "2",
+        agentName: "Agent 2"
+      });
     } else if (message.toLowerCase().includes('help')) {
-      return "I'm here to help. What do you need assistance with?";
+      responses.push({
+        content: "I'm here to help. What do you need assistance with?",
+        agentId: "1",
+        agentName: "Agent 1"
+      });
     } else if (message.toLowerCase().includes('weather')) {
-      return "I don't have access to real-time weather data, but I can discuss weather concepts if you'd like.";
+      responses.push({
+        content: "I don't have access to real-time weather data, but I can discuss weather concepts if you'd like.",
+        agentId: "3",
+        agentName: "Agent 3"
+      });
+      responses.push({
+        content: "While I can't provide current forecasts, I could talk about meteorological patterns and concepts.",
+        agentId: "1",
+        agentName: "Agent 1"
+      });
     } else if (message.toLowerCase().includes('name')) {
-      return "I'm an AI assistant designed to help answer your questions.";
+      responses.push({
+        content: "I'm Agent 1, designed to help answer your questions accurately and concisely.",
+        agentId: "1", 
+        agentName: "Agent 1"
+      });
     } else {
-      return "I understand your message. How else can I assist you today?";
+      responses.push({
+        content: "I understand your message. How else can I assist you today?",
+        agentId: "1",
+        agentName: "Agent 1"
+      });
     }
+    
+    return responses;
   };
 
-  // Send a message in the current conversation
+  // Send a message in the current conversation - updated to handle multiple agent responses
   const sendMessage = async (content: string) => {
     if (!currentConversationId) {
       createNewConversation();
@@ -107,15 +143,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       });
     });
     
-    // Generate and add AI response
+    // Generate and add AI responses
     try {
-      const aiResponseContent = await generateAIResponse(content);
+      const aiResponses = await generateAIResponse(content);
+      
+      // Create one combined message with all agent responses
+      const combinedContent = aiResponses.map(response => response.content).join('\n\n');
       
       const aiMessage: Message = {
         id: `msg-${Date.now() + 1}`,
-        content: aiResponseContent,
+        content: combinedContent,
         role: 'assistant',
         timestamp: new Date(),
+        // Store agent info as JSON for each response
+        agentId: JSON.stringify(aiResponses.map(r => r.agentId)),
+        agentName: JSON.stringify(aiResponses.map(r => r.agentName)),
       };
       
       setConversations(prevConversations => {

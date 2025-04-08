@@ -11,6 +11,67 @@ interface MessageProps {
 const Message: React.FC<MessageProps> = ({ message }) => {
   const isUser = message.role === 'user';
   
+  // Parse agent information if it exists
+  const renderAssistantContent = () => {
+    if (!message.agentId || !message.agentName) {
+      // Normal rendering for messages without agent info
+      return message.content.split('\n').map((paragraph, i) => (
+        <p key={i} className={i > 0 ? 'mt-2' : ''}>
+          {paragraph}
+        </p>
+      ));
+    }
+
+    try {
+      // Parse agent IDs and names
+      const agentIds = JSON.parse(message.agentId) as string[];
+      const agentNames = JSON.parse(message.agentName) as string[];
+      
+      // Split content into paragraphs then further split by double newlines
+      // which is our separator for different agent responses
+      const paragraphs = message.content.split('\n\n');
+      
+      return agentIds.map((id, index) => {
+        const name = agentNames[index];
+        const content = paragraphs[index];
+        
+        if (!content) return null;
+        
+        return (
+          <div key={index} className="mb-4 border-l-2 pl-3" style={{ borderColor: getAgentColor(id) }}>
+            <div className="text-xs text-muted-foreground mb-1 flex items-center">
+              <Bot className="h-3 w-3 mr-1" />
+              <span>{name}</span>
+            </div>
+            {content.split('\n').map((paragraph, i) => (
+              <p key={i} className={i > 0 ? 'mt-2' : ''}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        );
+      });
+    } catch (error) {
+      // Fallback to regular rendering if parsing fails
+      console.error('Error parsing agent info:', error);
+      return message.content.split('\n').map((paragraph, i) => (
+        <p key={i} className={i > 0 ? 'mt-2' : ''}>
+          {paragraph}
+        </p>
+      ));
+    }
+  };
+  
+  // Helper function to get agent color based on ID
+  const getAgentColor = (agentId: string) => {
+    switch (agentId) {
+      case "1": return "#3b82f6"; // blue
+      case "2": return "#10b981"; // green
+      case "3": return "#8b5cf6"; // purple
+      default: return "#6b7280";  // gray
+    }
+  };
+  
   return (
     <div 
       className={cn(
@@ -33,11 +94,13 @@ const Message: React.FC<MessageProps> = ({ message }) => {
           {isUser ? 'You' : 'Assistant'}
         </div>
         <div className="prose prose-sm max-w-none">
-          {message.content.split('\n').map((paragraph, i) => (
-            <p key={i} className={i > 0 ? 'mt-2' : ''}>
-              {paragraph}
-            </p>
-          ))}
+          {isUser ? (
+            message.content.split('\n').map((paragraph, i) => (
+              <p key={i} className={i > 0 ? 'mt-2' : ''}>
+                {paragraph}
+              </p>
+            ))
+          ) : renderAssistantContent()}
         </div>
       </div>
     </div>
